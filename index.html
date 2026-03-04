@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indi Step 4 A/B Prototype</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --line: #334155;
+      --accent: #22c55e;
+      --accent-2: #3b82f6;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top right, #1e293b 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .app {
+      width: min(760px, 100%);
+      background: linear-gradient(160deg, #0b1223 0%, var(--card) 70%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .h1 { margin: 0; font-size: 18px; }
+    .sub { color: var(--muted); margin: 6px 0 0; font-size: 13px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .badge strong { color: var(--text); }
+    .switch button {
+      border: 1px solid var(--line);
+      background: #0b1223;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .switch button.active { border-color: var(--accent-2); color: #dbeafe; }
+    .panel {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(2, 6, 23, .45);
+    }
+    .label { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+    .input-wrap { position: relative; }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0b1223;
+      color: var(--text);
+      outline: none;
+      font-size: 15px;
+    }
+    input[type="text"]:focus { border-color: #64748b; }
+    .list {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      max-height: 240px;
+      overflow: auto;
+      background: #0b1223;
+    }
+    .item {
+      padding: 9px 10px;
+      border-top: 1px solid #1f2937;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .item:first-child { border-top: none; }
+    .item:hover, .item.active {
+      background: rgba(59, 130, 246, .15);
+    }
+    .item strong { color: #bfdbfe; }
+    .actions { margin-top: 12px; display: flex; gap: 8px; }
+    button.main {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.ghost {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 14px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .hint { margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .ok { margin-top: 10px; color: var(--accent); font-size: 13px; }
+    .err { margin-top: 10px; color: var(--danger); font-size: 13px; }
+    pre {
+      margin: 10px 0 0;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px;
+      max-height: 240px;
+      overflow: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <div>
+        <h1 class="h1">Step 4 Prototype: Место рождения</h1>
+        <p class="sub">Реальные подсказки из <code>places.chronos.mg</code>. Сравни UX варианта A, B-lite и B-aggressive.</p>
+      </div>
+      <div class="row">
+        <div class="badge">Experiment: <strong>place_autoselect_v1</strong></div>
+        <div class="switch">
+          <button id="variantA">Variant A (current)</button>
+          <button id="variantBL">Variant B-lite</button>
+          <button id="variantBG">Variant B-aggressive</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <p class="label">Где вы родились?</p>
+      <div class="input-wrap">
+        <input id="placeInput" type="text" placeholder="Укажите место" autocomplete="off" />
+      </div>
+      <div id="list" class="list" hidden></div>
+      <div class="actions">
+        <button id="quickPickBtn" class="ghost" hidden></button>
+        <button id="confirmBtn" class="main">Подтвердить место</button>
+        <button id="resetBtn" class="ghost">Сбросить</button>
+      </div>
+      <div id="state"></div>
+      <p class="hint" id="uxHint"></p>
+      <pre id="eventLog"></pre>
+    </section>
+  </main>
+
+  <script>
+    const API = "https://places.chronos.mg/api/places?language=ru&input=";
+    const EXPERIMENT = "place_autoselect_v1";
+    const LS_KEY = "ab_variant_place_step";
+
+    const input = document.getElementById("placeInput");
+    const list = document.getElementById("list");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const state = document.getElementById("state");
+    const eventLog = document.getElementById("eventLog");
+    const uxHint = document.getElementById("uxHint");
+    const variantAButton = document.getElementById("variantA");
+    const variantBLButton = document.getElementById("variantBL");
+    const variantBGButton = document.getElementById("variantBG");
+    const quickPickBtn = document.getElementById("quickPickBtn");
+
+    let variant = "A";
+    let suggestions = [];
+    let selected = null;
+    let activeIndex = -1;
+    let debounceTimer;
+
+    function logEvent(name, payload = {}) {
+      const evt = {
+        time: new Date().toISOString(),
+        event: name,
+        exp: EXPERIMENT,
+        variant,
+        ...payload
+      };
+      eventLog.textContent = JSON.stringify(evt, null, 2) + "\n\n" + eventLog.textContent;
+      console.log("prototype-event", evt);
+    }
+
+    function setVariant(next) {
+      variant = next;
+      localStorage.setItem(LS_KEY, next);
+      variantAButton.classList.toggle("active", variant === "A");
+      variantBLButton.classList.toggle("active", variant === "BL");
+      variantBGButton.classList.toggle("active", variant === "BG");
+      if (variant === "A") {
+        uxHint.textContent = "A: как сейчас в проде. Нужен явный выбор из списка.";
+      } else if (variant === "BL") {
+        uxHint.textContent = "B-lite: мягкий режим. Первый вариант подсвечен, есть кнопка быстрого выбора, но без авто-перезаписи поля.";
+      } else {
+        uxHint.textContent = "B-aggressive: автоподстановка top-1 и fallback-выбор по Enter.";
+      }
+      resetState();
+      logEvent("ab_variant_assigned", {});
+    }
+
+    function resetState() {
+      suggestions = [];
+      selected = null;
+      activeIndex = -1;
+      input.value = "";
+      renderList();
+      state.innerHTML = "";
+      quickPickBtn.hidden = true;
+      quickPickBtn.textContent = "";
+    }
+
+    function showError(text) {
+      state.innerHTML = `<div class="err">${text}</div>`;
+    }
+
+    function showOk(text) {
+      state.innerHTML = `<div class="ok">${text}</div>`;
+    }
+
+    function highlight(text, q) {
+      if (!q) return text;
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return text.replace(new RegExp(`(${safe})`, "ig"), "<strong>$1</strong>");
+    }
+
+    function renderList() {
+      if (!suggestions.length) {
+        list.hidden = true;
+        list.innerHTML = "";
+        quickPickBtn.hidden = true;
+        return;
+      }
+      list.hidden = false;
+      const q = input.value.trim();
+      if (variant === "BL") {
+        quickPickBtn.hidden = false;
+        quickPickBtn.textContent = `Использовать: ${suggestions[0].name}`;
+      } else {
+        quickPickBtn.hidden = true;
+      }
+      list.innerHTML = suggestions.map((s, i) => (
+        `<div class="item ${i === activeIndex ? "active" : ""}" data-i="${i}">
+          ${highlight(s.name, q)}
+        </div>`
+      )).join("");
+    }
+
+    function pick(i, source = "click") {
+      if (i < 0 || i >= suggestions.length) return;
+      selected = suggestions[i];
+      activeIndex = i;
+      input.value = selected.name;
+      renderList();
+      logEvent("step4_place_selected", {
+        source,
+        place_id: selected.id,
+        place_name: selected.name
+      });
+    }
+
+    async function searchPlaces(raw) {
+      const q = raw.trim();
+      selected = null;
+      activeIndex = -1;
+      if (!q || q.length < 2) {
+        suggestions = [];
+        renderList();
+        return;
+      }
+      try {
+        const res = await fetch(API + encodeURIComponent(q), { credentials: "include" });
+        const data = await res.json();
+        suggestions = (data && data.data) ? data.data.slice(0, 12) : [];
+        if (variant === "BL" && suggestions.length > 0) {
+          activeIndex = 0;
+          logEvent("step4_place_prehighlight", {
+            place_id: suggestions[0].id,
+            place_name: suggestions[0].name
+          });
+        }
+        if (variant === "BG" && suggestions.length > 0) {
+          activeIndex = 0;
+          selected = suggestions[0];
+          input.value = selected.name;
+          logEvent("step4_place_autoselect", {
+            place_id: selected.id,
+            place_name: selected.name
+          });
+        }
+        renderList();
+      } catch (e) {
+        suggestions = [];
+        renderList();
+        showError("Не удалось загрузить подсказки. Проверь localhost запуск.");
+        logEvent("step4_suggest_error", { message: String(e) });
+      }
+    }
+
+    input.addEventListener("input", () => {
+      state.innerHTML = "";
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => searchPlaces(input.value), 250);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (!suggestions.length) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeIndex = Math.min(suggestions.length - 1, activeIndex + 1);
+        renderList();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIndex = Math.max(0, activeIndex - 1);
+        renderList();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (activeIndex >= 0) {
+          pick(activeIndex, "enter");
+        } else if (variant === "BG" && suggestions.length) {
+          pick(0, "enter_fallback_top1");
+        }
+      }
+    });
+
+    list.addEventListener("click", (e) => {
+      const item = e.target.closest(".item");
+      if (!item) return;
+      pick(Number(item.dataset.i), "click");
+    });
+
+    quickPickBtn.addEventListener("click", () => {
+      if (!suggestions.length) return;
+      pick(activeIndex >= 0 ? activeIndex : 0, "quick_pick_button");
+    });
+
+    confirmBtn.addEventListener("click", () => {
+      logEvent("step4_submit_click");
+      if (!selected && variant === "BL" && suggestions.length && activeIndex >= 0) {
+        pick(activeIndex, "submit_fallback_highlight");
+      }
+      if (!selected) {
+        showError("Заполните поле: выберите место из списка");
+        logEvent("step4_submit_error", { reason: "empty_or_not_selected" });
+        return;
+      }
+      showOk(`OK: ${selected.name} (${selected.lat}, ${selected.lon})`);
+      logEvent("step4_submit_success", {
+        place_id: selected.id,
+        place_name: selected.name,
+        lat: selected.lat,
+        lon: selected.lon
+      });
+    });
+
+    resetBtn.addEventListener("click", () => {
+      logEvent("step4_reset_click");
+      resetState();
+    });
+
+    variantAButton.addEventListener("click", () => setVariant("A"));
+    variantBLButton.addEventListener("click", () => setVariant("BL"));
+    variantBGButton.addEventListener("click", () => setVariant("BG"));
+
+    const fromUrl = new URLSearchParams(location.search).get("variant");
+    const fromLs = localStorage.getItem(LS_KEY);
+    if (fromUrl === "A" || fromUrl === "BL" || fromUrl === "BG") setVariant(fromUrl);
+    else if (fromLs === "A" || fromLs === "BL" || fromLs === "BG") setVariant(fromLs);
+    else {
+      const r = Math.random();
+      if (r < 0.34) setVariant("A");
+      else if (r < 0.67) setVariant("BL");
+      else setVariant("BG");
+    }
+
+    logEvent("step4_view");
+  </script>
+</body>
+</html>

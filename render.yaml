@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: ux-auth-indi
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
