@@ -72,7 +72,7 @@
     .input-wrap { position: relative; }
     input[type="text"] {
       width: 100%;
-      padding: 12px 12px;
+      padding: 12px 40px 12px 12px;
       border-radius: 10px;
       border: 1px solid var(--line);
       background: #0b1223;
@@ -80,6 +80,25 @@
       outline: none;
       font-size: 15px;
     }
+    .clear-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: #0b1223;
+      color: #cbd5e1;
+      line-height: 1;
+      font-size: 16px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .clear-btn:hover { border-color: #64748b; color: #e2e8f0; }
     input[type="text"]:focus { border-color: #64748b; }
     .list {
       margin-top: 8px;
@@ -153,6 +172,7 @@
       <p class="label">Где вы родились?</p>
       <div class="input-wrap">
         <input id="placeInput" type="text" placeholder="Укажите место" autocomplete="off" />
+        <button id="clearBtn" class="clear-btn" type="button" aria-label="Очистить поле" hidden>×</button>
       </div>
       <div id="list" class="list" hidden></div>
       <div class="actions">
@@ -175,6 +195,7 @@
     const list = document.getElementById("list");
     const confirmBtn = document.getElementById("confirmBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const clearBtn = document.getElementById("clearBtn");
     const state = document.getElementById("state");
     const eventLog = document.getElementById("eventLog");
     const uxHint = document.getElementById("uxHint");
@@ -225,6 +246,11 @@
       state.innerHTML = "";
       quickPickBtn.hidden = true;
       quickPickBtn.textContent = "";
+      clearBtn.hidden = true;
+    }
+
+    function syncClearButton() {
+      clearBtn.hidden = input.value.trim().length === 0;
     }
 
     function showError(text) {
@@ -322,6 +348,7 @@
 
     input.addEventListener("input", () => {
       state.innerHTML = "";
+      syncClearButton();
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => searchPlaces(input.value), 250);
     });
@@ -364,6 +391,19 @@
       }
     });
 
+    clearBtn.addEventListener("click", () => {
+      logEvent("step4_clear_click");
+      suggestions = [];
+      selected = null;
+      activeIndex = -1;
+      input.value = "";
+      renderList();
+      state.innerHTML = "";
+      quickPickBtn.hidden = true;
+      syncClearButton();
+      input.focus({ preventScroll: true });
+    });
+
     confirmBtn.addEventListener("click", () => {
       logEvent("step4_submit_click");
       if (!selected && variant === "BL" && suggestions.length && activeIndex >= 0) {
@@ -398,6 +438,7 @@
     else setVariant("BL");
 
     logEvent("step4_view");
+    syncClearButton();
   </script>
 </body>
 </html>
