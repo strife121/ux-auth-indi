@@ -252,11 +252,9 @@
       <div class="actions">
         <button id="quickPickBtn" class="ghost" hidden></button>
         <button id="confirmBtn" class="main">Подтвердить место</button>
-        <button id="resetBtn" class="ghost">Сбросить</button>
       </div>
       <div id="state"></div>
       <p class="hint" id="uxHint"></p>
-      <pre id="eventLog"></pre>
     </section>
     <section id="nextScreen" class="panel" hidden>
       <p class="label">Следующий экран (mock)</p>
@@ -273,11 +271,9 @@
     const input = document.getElementById("placeInput");
     const list = document.getElementById("list");
     const confirmBtn = document.getElementById("confirmBtn");
-    const resetBtn = document.getElementById("resetBtn");
     const clearBtn = document.getElementById("clearBtn");
     const nextScreen = document.getElementById("nextScreen");
     const state = document.getElementById("state");
-    const eventLog = document.getElementById("eventLog");
     const uxHint = document.getElementById("uxHint");
     const variantAButton = document.getElementById("variantA");
     const variantBLButton = document.getElementById("variantBL");
@@ -299,7 +295,6 @@
         variant,
         ...payload
       };
-      eventLog.textContent = JSON.stringify(evt, null, 2) + "\n\n" + eventLog.textContent;
       console.log("prototype-event", evt);
     }
 
@@ -364,7 +359,7 @@
       }
       list.innerHTML = suggestions.map((s, i) => (
         `<div class="item ${i === activeIndex ? "active" : ""} ${variant === "A" ? `variant-a ${i === 0 ? "a-likely" : "a-other"}` : ""}" data-i="${i}">
-          ${variant === "A" ? s.name : highlight(s.name, q)}
+          ${s.name}
         </div>`
       )).join("");
     }
@@ -513,11 +508,6 @@
       if (e.key !== "Enter") return;
       e.preventDefault();
       submitPlace("enter_on_confirm");
-    });
-
-    resetBtn.addEventListener("click", () => {
-      logEvent("step4_reset_click");
-      resetState();
     });
 
     variantAButton.addEventListener("click", () => setVariant("A"));
