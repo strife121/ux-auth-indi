@@ -138,14 +138,13 @@
     <div class="top">
       <div>
         <h1 class="h1">Step 4 Prototype: Место рождения</h1>
-        <p class="sub">Реальные подсказки из <code>places.chronos.mg</code>. Сравни UX варианта A, B-lite и B-aggressive.</p>
+        <p class="sub">Реальные подсказки из <code>places.chronos.mg</code>. Сравни UX варианта A и B-lite (основной).</p>
       </div>
       <div class="row">
         <div class="badge">Experiment: <strong>place_autoselect_v1</strong></div>
         <div class="switch">
           <button id="variantA">Variant A (current)</button>
           <button id="variantBL">Variant B-lite</button>
-          <button id="variantBG">Variant B-aggressive</button>
         </div>
       </div>
     </div>
@@ -181,7 +180,6 @@
     const uxHint = document.getElementById("uxHint");
     const variantAButton = document.getElementById("variantA");
     const variantBLButton = document.getElementById("variantBL");
-    const variantBGButton = document.getElementById("variantBG");
     const quickPickBtn = document.getElementById("quickPickBtn");
 
     let variant = "A";
@@ -189,6 +187,8 @@
     let selected = null;
     let activeIndex = -1;
     let debounceTimer;
+    const isProbablyMobile = window.matchMedia("(pointer: coarse)").matches
+      || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     function logEvent(name, payload = {}) {
       const evt = {
@@ -207,13 +207,10 @@
       localStorage.setItem(LS_KEY, next);
       variantAButton.classList.toggle("active", variant === "A");
       variantBLButton.classList.toggle("active", variant === "BL");
-      variantBGButton.classList.toggle("active", variant === "BG");
       if (variant === "A") {
         uxHint.textContent = "A: как сейчас в проде. Нужен явный выбор из списка.";
-      } else if (variant === "BL") {
-        uxHint.textContent = "B-lite: мягкий режим. Первый вариант подсвечен, есть кнопка быстрого выбора, но без авто-перезаписи поля.";
       } else {
-        uxHint.textContent = "B-aggressive: автоподстановка top-1 и fallback-выбор по Enter.";
+        uxHint.textContent = "B-lite: мягкий режим. Первый вариант подсвечен, есть кнопка быстрого выбора, но без авто-перезаписи поля.";
       }
       resetState();
       logEvent("ab_variant_assigned", {});
@@ -279,6 +276,21 @@
       });
     }
 
+    function closeDropdownAndMoveFocus(source = "unknown") {
+      suggestions = [];
+      activeIndex = -1;
+      renderList();
+      input.blur();
+      if (!isProbablyMobile) {
+        confirmBtn.focus({ preventScroll: true });
+      }
+      logEvent("step4_post_enter_focus", {
+        source,
+        keyboard_closed: true,
+        desktop_focus_to_confirm: !isProbablyMobile
+      });
+    }
+
     async function searchPlaces(raw) {
       const q = raw.trim();
       selected = null;
@@ -297,15 +309,6 @@
           logEvent("step4_place_prehighlight", {
             place_id: suggestions[0].id,
             place_name: suggestions[0].name
-          });
-        }
-        if (variant === "BG" && suggestions.length > 0) {
-          activeIndex = 0;
-          selected = suggestions[0];
-          input.value = selected.name;
-          logEvent("step4_place_autoselect", {
-            place_id: selected.id,
-            place_name: selected.name
           });
         }
         renderList();
@@ -337,8 +340,12 @@
         e.preventDefault();
         if (activeIndex >= 0) {
           pick(activeIndex, "enter");
-        } else if (variant === "BG" && suggestions.length) {
-          pick(0, "enter_fallback_top1");
+          if (variant === "BL") {
+            closeDropdownAndMoveFocus("enter_with_highlight");
+          }
+        } else if (variant === "BL" && suggestions.length) {
+          pick(0, "enter_fallback_highlight_top1");
+          closeDropdownAndMoveFocus("enter_fallback_top1");
         }
       }
     });
@@ -352,6 +359,9 @@
     quickPickBtn.addEventListener("click", () => {
       if (!suggestions.length) return;
       pick(activeIndex >= 0 ? activeIndex : 0, "quick_pick_button");
+      if (variant === "BL") {
+        closeDropdownAndMoveFocus("quick_pick_button");
+      }
     });
 
     confirmBtn.addEventListener("click", () => {
@@ -380,18 +390,12 @@
 
     variantAButton.addEventListener("click", () => setVariant("A"));
     variantBLButton.addEventListener("click", () => setVariant("BL"));
-    variantBGButton.addEventListener("click", () => setVariant("BG"));
 
     const fromUrl = new URLSearchParams(location.search).get("variant");
     const fromLs = localStorage.getItem(LS_KEY);
-    if (fromUrl === "A" || fromUrl === "BL" || fromUrl === "BG") setVariant(fromUrl);
-    else if (fromLs === "A" || fromLs === "BL" || fromLs === "BG") setVariant(fromLs);
-    else {
-      const r = Math.random();
-      if (r < 0.34) setVariant("A");
-      else if (r < 0.67) setVariant("BL");
-      else setVariant("BG");
-    }
+    if (fromUrl === "A" || fromUrl === "BL") setVariant(fromUrl);
+    else if (fromLs === "A" || fromLs === "BL") setVariant(fromLs);
+    else setVariant("BL");
 
     logEvent("step4_view");
   </script>
