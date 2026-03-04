@@ -325,6 +325,10 @@
     }
 
     function syncClearButton() {
+      if (variant === "A") {
+        clearBtn.hidden = true;
+        return;
+      }
       clearBtn.hidden = input.value.trim().length === 0;
     }
 
@@ -410,6 +414,9 @@
             place_id: suggestions[0].id,
             place_name: suggestions[0].name
           });
+        } else if (variant === "A" && !isProbablyMobile && suggestions.length > 0) {
+          // In variant A desktop, Enter should select active suggestion.
+          activeIndex = 0;
         }
         renderList();
       } catch (e) {
