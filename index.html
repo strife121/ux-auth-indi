@@ -440,7 +440,8 @@
       } else if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
-        if (activeIndex >= 0) {
+        const allowEnterPick = variant === "BL" || (variant === "A" && !isProbablyMobile);
+        if (activeIndex >= 0 && allowEnterPick) {
           pick(activeIndex, "enter");
           closeDropdownAndMoveFocus("enter_with_highlight");
         } else if (variant === "BL" && suggestions.length) {
