@@ -25,6 +25,7 @@
       display: grid;
       place-items: center;
       padding: 20px;
+      overflow-x: hidden;
     }
     .app {
       width: min(760px, 100%);
@@ -33,6 +34,7 @@
       border-radius: 16px;
       padding: 18px;
       box-shadow: 0 18px 50px rgba(0,0,0,.35);
+      overflow: hidden;
     }
     .top {
       display: flex;
@@ -99,6 +101,7 @@
       padding: 0;
     }
     .clear-btn:hover { border-color: #64748b; color: #e2e8f0; }
+    .clear-btn[hidden] { display: none !important; }
     input[type="text"]:focus { border-color: #64748b; }
     .list {
       margin-top: 8px;
@@ -149,6 +152,48 @@
       max-height: 240px;
       overflow: auto;
       font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+        align-items: start;
+      }
+      .app {
+        width: 100%;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .h1 { font-size: 16px; }
+      .sub { font-size: 12px; }
+      .row {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .switch {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .switch button {
+        width: 100%;
+        padding: 9px 8px;
+        font-size: 12px;
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      button.main, button.ghost {
+        width: 100%;
+      }
+      pre {
+        max-height: 160px;
+        font-size: 11px;
+      }
     }
   </style>
 </head>
