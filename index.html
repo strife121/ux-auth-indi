@@ -229,6 +229,11 @@
       <p class="hint" id="uxHint"></p>
       <pre id="eventLog"></pre>
     </section>
+    <section id="nextScreen" class="panel" hidden>
+      <p class="label">Следующий экран (mock)</p>
+      <h2 class="h1" style="margin-top:0">5 из 5 · Отправим натальную карту на почту</h2>
+      <p class="sub">Место подтверждено. Здесь продолжится следующий шаг onboarding.</p>
+    </section>
   </main>
 
   <script>
@@ -241,6 +246,7 @@
     const confirmBtn = document.getElementById("confirmBtn");
     const resetBtn = document.getElementById("resetBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const nextScreen = document.getElementById("nextScreen");
     const state = document.getElementById("state");
     const eventLog = document.getElementById("eventLog");
     const uxHint = document.getElementById("uxHint");
@@ -352,13 +358,12 @@
       activeIndex = -1;
       renderList();
       input.blur();
-      if (!isProbablyMobile) {
-        confirmBtn.focus({ preventScroll: true });
-      }
+      // Move focus to confirm so second Enter immediately submits and moves forward.
+      confirmBtn.focus({ preventScroll: true });
       logEvent("step4_post_enter_focus", {
         source,
         keyboard_closed: true,
-        desktop_focus_to_confirm: !isProbablyMobile
+        desktop_focus_to_confirm: true
       });
     }
 
@@ -412,9 +417,7 @@
         e.preventDefault();
         if (activeIndex >= 0) {
           pick(activeIndex, "enter");
-          if (variant === "BL") {
-            closeDropdownAndMoveFocus("enter_with_highlight");
-          }
+          closeDropdownAndMoveFocus("enter_with_highlight");
         } else if (variant === "BL" && suggestions.length) {
           pick(0, "enter_fallback_highlight_top1");
           closeDropdownAndMoveFocus("enter_fallback_top1");
@@ -449,7 +452,12 @@
       input.focus({ preventScroll: true });
     });
 
-    confirmBtn.addEventListener("click", () => {
+    function goToNextScreen() {
+      document.querySelector(".panel").hidden = true;
+      nextScreen.hidden = false;
+    }
+
+    function submitPlace(source = "click") {
       logEvent("step4_submit_click");
       if (!selected && variant === "BL" && suggestions.length && activeIndex >= 0) {
         pick(activeIndex, "submit_fallback_highlight");
@@ -466,6 +474,17 @@
         lat: selected.lat,
         lon: selected.lon
       });
+      goToNextScreen();
+    }
+
+    confirmBtn.addEventListener("click", () => submitPlace("click_confirm"));
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      if (document.activeElement === confirmBtn) {
+        e.preventDefault();
+        submitPlace("enter_on_confirm");
+      }
     });
 
     resetBtn.addEventListener("click", () => {
