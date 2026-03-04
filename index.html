@@ -415,6 +415,7 @@
         renderList();
       } else if (e.key === "Enter") {
         e.preventDefault();
+        e.stopPropagation();
         if (activeIndex >= 0) {
           pick(activeIndex, "enter");
           closeDropdownAndMoveFocus("enter_with_highlight");
@@ -478,13 +479,10 @@
     }
 
     confirmBtn.addEventListener("click", () => submitPlace("click_confirm"));
-
-    document.addEventListener("keydown", (e) => {
+    confirmBtn.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
-      if (document.activeElement === confirmBtn) {
-        e.preventDefault();
-        submitPlace("enter_on_confirm");
-      }
+      e.preventDefault();
+      submitPlace("enter_on_confirm");
     });
 
     resetBtn.addEventListener("click", () => {
