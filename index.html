@@ -141,6 +141,16 @@
       background: rgba(59, 130, 246, .10);
     }
     .item strong { color: #2d2f36; font-weight: 600; }
+    .item.a-likely {
+      color: rgba(0, 0, 0, 0.87);
+    }
+    .item.a-other {
+      color: rgba(0, 0, 0, 0.60);
+    }
+    .item.variant-a:hover,
+    .item.variant-a.active {
+      background: transparent;
+    }
     .actions { margin-top: 12px; display: flex; gap: 8px; }
     button.main {
       border: none;
@@ -353,8 +363,8 @@
         quickPickBtn.hidden = true;
       }
       list.innerHTML = suggestions.map((s, i) => (
-        `<div class="item ${i === activeIndex ? "active" : ""}" data-i="${i}">
-          ${highlight(s.name, q)}
+        `<div class="item ${i === activeIndex ? "active" : ""} ${variant === "A" ? `variant-a ${i === 0 ? "a-likely" : "a-other"}` : ""}" data-i="${i}">
+          ${variant === "A" ? s.name : highlight(s.name, q)}
         </div>`
       )).join("");
     }
@@ -449,6 +459,7 @@
       const item = e.target.closest(".item");
       if (!item) return;
       pick(Number(item.dataset.i), "click");
+      closeDropdownAndMoveFocus("click_select");
     });
 
     quickPickBtn.addEventListener("click", () => {
